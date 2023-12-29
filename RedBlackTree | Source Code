@@ -1,0 +1,200 @@
+import java.util.Scanner;
+
+enum Color {
+    //Ini mendefinisikan enumerasi dengan nama Color, memasukkan nilai RED dan BLACK
+    RED, BLACK
+}
+
+class Task {
+    // untuk menginisialisasi tugas dan sebuah metode toString untuk memudahkan pencetakan.
+    String taskName;
+    int priority;
+
+    public Task(String taskName, int priority) {
+        this.taskName = taskName;
+        this.priority = priority;
+    }
+
+    @Override
+    public String toString() {
+        return "Task: " + taskName + ", Priority: " + priority;
+    }
+}
+
+class Node {
+    //Kelas ini mewakili sebuah node dalam Red-Black Tree. 
+    //Ini berisi tugas, warna (Merah atau Hitam), dan referensi ke parent, anak kiri, dan anak kanan.
+    Task task;
+    Color color;
+    Node parent;
+    Node left;
+    Node right;
+
+    public Node(Task task, Color color) {
+        
+        this.task = task;
+        this.color = color;
+    }
+}
+
+public class WorkTaskManager {
+    //Penginisialisasi root dan nill (node)
+    private Node root;
+    private Node nil; // Sentinel node
+
+    public WorkTaskManager() {
+        nil = new Node(null, Color.BLACK);
+        root = nil;
+    }
+
+    // Red-Black Tree operations
+
+    private void leftRotate(Node x) {
+        Node y = x.right;
+        x.right = y.left;
+        if (y.left != nil) {
+            y.left.parent = x;
+        }
+        y.parent = x.parent;
+        if (x.parent == nil) {
+            root = y;
+        } else if (x == x.parent.left) {
+            x.parent.left = y;
+        } else {
+            x.parent.right = y;
+        }
+        y.left = x;
+        x.parent = y;
+    }
+
+    private void rightRotate(Node y) {
+        Node x = y.left;
+        y.left = x.right;
+        if (x.right != nil) {
+            x.right.parent = y;
+        }
+        x.parent = y.parent;
+        if (y.parent == nil) {
+            root = x;
+        } else if (y == y.parent.left) {
+            y.parent.left = x;
+        } else {
+            y.parent.right = x;
+        }
+        x.right = y;
+        y.parent = x;
+    }
+
+    private void insertFixup(Node z) {
+        // Implementasi perbaikan setelah penyisipan
+        while (z.parent.color == Color.RED) {
+            if (z.parent == z.parent.parent.left) {
+                Node y = z.parent.parent.right;
+                if (y.color == Color.RED) {
+                    z.parent.color = Color.BLACK;
+                    y.color = Color.BLACK;
+                    z.parent.parent.color = Color.RED;
+                    z = z.parent.parent;
+                } else {
+                    if (z == z.parent.right) {
+                        z = z.parent;
+                        leftRotate(z);
+                    }
+                    z.parent.color = Color.BLACK;
+                    z.parent.parent.color = Color.RED;
+                    rightRotate(z.parent.parent);
+                }
+            } else {
+                Node y = z.parent.parent.left;
+                if (y.color == Color.RED) {
+                    z.parent.color = Color.BLACK;
+                    y.color = Color.BLACK;
+                    z.parent.parent.color = Color.RED;
+                    z = z.parent.parent;
+                } else {
+                    if (z == z.parent.left) {
+                        z = z.parent;
+                        rightRotate(z);
+                    }
+                    z.parent.color = Color.BLACK;
+                    z.parent.parent.color = Color.RED;
+                    leftRotate(z.parent.parent);
+                }
+            }
+        }
+        root.color = Color.BLACK;
+    }
+
+    public void insert(Task task) {
+        //menyisipkan tugas baru ke dalam Red-Black Tree dan memanggil metode insertFixup untuk memastikan 
+        //properti dari pohon tersebut tetap terjaga.
+        Node z = new Node(task, Color.RED);
+        Node y = nil;
+        Node x = root;
+        while (x != nil) {
+            y = x;
+            if (z.task.priority < x.task.priority) {
+                x = x.left;
+            } else {
+                x = x.right;
+            }
+        }
+        z.parent = y;
+        if (y == nil) {
+            root = z;
+        } else if (z.task.priority < y.task.priority) {
+            y.left = z;
+        } else {
+            y.right = z;
+        }
+        z.left = nil;
+        z.right = nil;
+        z.color = Color.RED;
+        insertFixup(z);
+    }
+
+    private void inOrderTraversal(Node x) {
+        //melakukan penelusuran inorder pada pohon dan mencetak tugas sesuai dengan urutan prioritasnya.
+        if (x != nil) {
+            inOrderTraversal(x.left);
+            System.out.println(x.task);
+            inOrderTraversal(x.right);
+        }
+    }
+
+    public void printTaskList() {
+        System.out.println("Work Task List:");
+        inOrderTraversal(root);
+    }
+
+    public void completeTask(String taskName) {
+
+        System.out.println("Task completed: " + taskName);
+    }
+
+    public static void main(String[] args) {
+        WorkTaskManager taskManager = new WorkTaskManager();
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("1. Add Task\n2. Print Task List\n3.  Exit");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume the newline
+
+            switch (choice) {
+                case 1:
+                    System.out.println("Enter task name:");
+                    String taskName = scanner.nextLine();
+                    System.out.println("Task Priority (numeric value):");
+                    int priority = scanner.nextInt();
+                    taskManager.insert(new Task(taskName, priority));
+                    break;
+                case 2:
+                    taskManager.printTaskList();
+                    break;
+                case 3:
+                    System.exit(0);
+            }
+        }
+    }
+}
